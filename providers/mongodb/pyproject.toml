@@ -3,18 +3,20 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "strands-agents-session"
-version = "0.1.2"
-description = "Backend-agnostic session management for Strands Agents — a SessionStorage interface + KeyValueSessionManager to build session backends (DynamoDB, Redis, MongoDB, …)"
+name = "strands_session_mongodb"
+version = "0.1.0"
+description = "MongoDB session manager (storage backend) for Strands Agents — persists sessions, agent state, and messages"
 authors = [{name = "Kamal", email = "skamalj@github.com"}]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "strands-agents-session>=0.1.0",
     "strands-agents",
+    "pymongo",
 ]
 keywords = [
-    "strands", "strands-agents", "session", "agent-state", "memory",
-    "persistence", "session-manager",
+    "strands", "strands-agents", "session", "mongodb",
+    "agent-state", "memory", "persistence",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -23,19 +25,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
-[project.optional-dependencies]
-dynamodb = ["strands-session-dynamodb>=0.1.0"]
-mongodb = ["strands-session-mongodb>=0.1.0"]
-
 [project.urls]
 Homepage = "https://github.com/skamalj/strands-agents-session"
 Repository = "https://github.com/skamalj/strands-agents-session.git"
 
-[dependency-groups]
-dev = [
-    "pytest>=7.0",
-    "pytest-cov",
-]
-
 [tool.hatch.build.targets.wheel]
-packages = ["src/strands_agents_session"]
+packages = ["src/strands_session_mongodb"]

@@ -7,10 +7,12 @@ members = ["core", "providers/*"]
 [tool.uv.sources]
 strands-agents-session = { workspace = true }
 strands-session-dynamodb = { workspace = true }
+strands-session-mongodb = { workspace = true }
 
 [dependency-groups]
 dev = [
     "pytest>=7.0",
     "pytest-cov",
     "strands-agents[openai]",
+    "pymongo",
 ]

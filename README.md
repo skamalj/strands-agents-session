@@ -10,8 +10,9 @@ This is a **uv workspace monorepo**: one repository, multiple independently-publ
 |---|---|---|
 | [`strands-agents-session`](https://pypi.org/project/strands-agents-session/) | [`core/`](core) | Backend-agnostic core — `SessionStorage` interface + `KeyValueSessionManager` (+ in-memory backend) |
 | [`strands-session-dynamodb`](https://pypi.org/project/strands-session-dynamodb/) | [`providers/dynamodb/`](providers/dynamodb) | Amazon DynamoDB storage backend |
+| [`strands-session-mongodb`](https://pypi.org/project/strands-session-mongodb/) | [`providers/mongodb/`](providers/mongodb) | MongoDB storage backend |
 
-More providers (Redis, MongoDB, …) land as new folders under `providers/`.
+More providers (Redis, Postgres, …) land as new folders under `providers/`.
 
 ## Install
 
@@ -19,8 +20,10 @@ Pick a provider directly, or use the core package's extras:
 
 ```bash
 pip install "strands-agents-session[dynamodb]"   # core + DynamoDB provider
-# equivalently:
+pip install "strands-agents-session[mongodb]"     # core + MongoDB provider
+# equivalently, install a provider directly:
 pip install strands-session-dynamodb
+pip install strands-session-mongodb
 ```
 
 Each provider is an independent distribution that pulls the core transitively — a DynamoDB user never pulls another provider's code.

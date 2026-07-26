@@ -81,10 +81,20 @@ class DynamoDBSessionStorage(SessionStorage):
     # SessionStorage ----------------------------------------------------
 
     def put(self, item: Dict[str, Any]) -> None:
+        self.table.put_item(Item=self._to_ddb(item))
+
+    def _to_ddb(self, item: Dict[str, Any]) -> Dict[str, Any]:
         ddb_item = {"PK": item["pk"], "SK": item["sk"], "data": item["data"]}
         if self.ttl_seconds:
             ddb_item["ttl"] = int(time.time()) + self.ttl_seconds
-        self.table.put_item(Item=ddb_item)
+        return ddb_item
+
+    def put_batch(self, items: List[Dict[str, Any]]) -> None:
+        # batch_writer transparently chunks to DynamoDB's 25-item limit and
+        # retries any UnprocessedItems.
+        with self.table.batch_writer() as batch:
+            for item in items:
+                batch.put_item(Item=self._to_ddb(item))
 
     def get(self, pk: str, sk: str) -> Optional[Dict[str, Any]]:
         item = self.table.get_item(Key={"PK": pk, "SK": sk}).get("Item")

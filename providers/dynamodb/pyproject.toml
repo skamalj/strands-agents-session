@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "strands_session_dynamodb"
-version = "0.1.0"
+version = "0.2.0"
 description = "Amazon DynamoDB session manager (storage backend) for Strands Agents — persists sessions, agent state, and messages"
 authors = [{name = "Kamal", email = "skamalj@github.com"}]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "strands-agents-session>=0.1.0",
+    "strands-agents-session>=0.2.0",
     "strands-agents",
     "boto3",
 ]

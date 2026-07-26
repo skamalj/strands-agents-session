@@ -41,12 +41,27 @@ class MongoDBSessionStorage(SessionStorage):
     # SessionStorage ----------------------------------------------------
 
     def put(self, item: Dict[str, Any]) -> None:
+        self.collection.replace_one(
+            {"pk": item["pk"], "sk": item["sk"]}, self._to_doc(item), upsert=True
+        )
+
+    def _to_doc(self, item: Dict[str, Any]) -> Dict[str, Any]:
         doc = {"pk": item["pk"], "sk": item["sk"], "data": item["data"]}
         if self.ttl_seconds:
             import datetime
 
             doc["created_at"] = datetime.datetime.now(datetime.timezone.utc)
-        self.collection.replace_one({"pk": item["pk"], "sk": item["sk"]}, doc, upsert=True)
+        return doc
+
+    def put_batch(self, items: List[Dict[str, Any]]) -> None:
+        from pymongo import ReplaceOne
+
+        ops = [
+            ReplaceOne({"pk": i["pk"], "sk": i["sk"]}, self._to_doc(i), upsert=True)
+            for i in items
+        ]
+        if ops:
+            self.collection.bulk_write(ops, ordered=True)
 
     def get(self, pk: str, sk: str) -> Optional[Dict[str, Any]]:
         doc = self.collection.find_one({"pk": pk, "sk": sk})

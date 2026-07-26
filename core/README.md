@@ -34,6 +34,28 @@ session_manager = KeyValueSessionManager(
 agent = Agent(session_manager=session_manager)
 ```
 
+## Batched writes (optional optimization)
+
+Strands writes **one item per message** (user, assistant, tool-use, tool-result), so a tool-heavy turn is several writes. For high-throughput workloads you can opt into **batched writes** — buffer messages and flush them in one batched storage call:
+
+```python
+DynamoDBSessionManager(
+    session_id="user-123",
+    table_name="sessions",
+    write_mode="batched",       # default is "immediate"
+    max_batch_size=25,          # flush once this many messages are buffered
+    max_batch_interval=5.0,     # ...or after this many seconds (lazy: checked on write)
+    flush_on_turn_end=True,     # ...or at each turn boundary (recommended backstop)
+    on_flush=my_callback,       # optional: called with the flushed batch
+)
+```
+
+**Durability trade-off (stated plainly):** on a crash you lose at most `max_batch_size` messages, or `max_batch_interval` seconds of un-flushed writes — whichever is smaller — plus anything since the last turn boundary when `flush_on_turn_end` is set. `write_mode="immediate"` (the default) has no such window.
+
+The time trigger is **lazy** — evaluated on each new message, so it never spawns a background thread and won't flush while the session is idle; `flush_on_turn_end` (and an explicit `flush()`) are the durability backstops.
+
+Each backend implements a native bulk write (DynamoDB `BatchWriteItem`, Mongo `bulk_write`, SQL one-transaction `executemany`); the buffering/flush logic lives in the core, so every backend gets it. The `on_flush` callback is a clean seam for driving downstream consumers (e.g. memory extraction) off a coherent, just-persisted batch.
+
 ## Building a backend
 
 Implement `SessionStorage` and hand it to `KeyValueSessionManager`:
@@ -47,6 +69,8 @@ class MyStorage(SessionStorage):
     def query(self, pk, sk_gte=None, limit=None): ...  # ordered by sk asc
     def delete(self, pk, sk): ...
     def delete_partition(self, pk): ...
+    # optional: override for a native bulk write (defaults to looping put)
+    def put_batch(self, items): ...
 
 class MySessionManager(KeyValueSessionManager):
     def __init__(self, session_id, **cfg):

@@ -54,13 +54,22 @@ class SQLSessionStorage(SessionStorage):
     # SessionStorage ----------------------------------------------------
 
     def put(self, item: Dict[str, Any]) -> None:
-        t = self.table
         with self.engine.begin() as conn:
-            result = conn.execute(
-                update(t).where(t.c.pk == item["pk"], t.c.sk == item["sk"]).values(data=item["data"])
-            )
-            if result.rowcount == 0:
-                conn.execute(insert(t).values(pk=item["pk"], sk=item["sk"], data=item["data"]))
+            self._upsert(conn, item)
+
+    def put_batch(self, items: List[Dict[str, Any]]) -> None:
+        # One transaction, one commit for the whole batch (portable upsert).
+        with self.engine.begin() as conn:
+            for item in items:
+                self._upsert(conn, item)
+
+    def _upsert(self, conn, item: Dict[str, Any]) -> None:
+        t = self.table
+        result = conn.execute(
+            update(t).where(t.c.pk == item["pk"], t.c.sk == item["sk"]).values(data=item["data"])
+        )
+        if result.rowcount == 0:
+            conn.execute(insert(t).values(pk=item["pk"], sk=item["sk"], data=item["data"]))
 
     def get(self, pk: str, sk: str) -> Optional[Dict[str, Any]]:
         t = self.table

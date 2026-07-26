@@ -39,6 +39,16 @@ class SessionStorage(ABC):
     def delete_partition(self, pk: str) -> None:
         """Delete every record under ``pk``."""
 
+    def put_batch(self, items: List[Dict[str, Any]]) -> None:
+        """Write multiple records in one call.
+
+        Default implementation loops :meth:`put`. Backends override this with a
+        native bulk write (DynamoDB ``BatchWriteItem``, Mongo ``bulk_write``,
+        SQL one-transaction ``executemany``) for efficiency.
+        """
+        for item in items:
+            self.put(item)
+
 
 class InMemorySessionStorage(SessionStorage):
     """In-memory storage — useful for tests and local development."""

@@ -1,0 +1,55 @@
+site_name: Strands Agents Session
+site_description: Pluggable session storage backends for Strands Agents — DynamoDB, MongoDB, SQL, and your own
+site_url: https://skamalj.github.io/strands-agents-session/
+repo_url: https://github.com/skamalj/strands-agents-session
+repo_name: skamalj/strands-agents-session
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.tracking
+    - content.code.copy
+    - toc.follow
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Concepts:
+      - Overview: concepts/overview.md
+      - Authentication: concepts/auth.md
+  - Core:
+      - What You Get: core/index.md
+      - Build Your Own Backend: core/building-a-backend.md
+  - Providers:
+      - DynamoDB: providers/dynamodb.md
+      - MongoDB: providers/mongodb.md
+      - SQL (SQLAlchemy): providers/sql.md

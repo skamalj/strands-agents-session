@@ -1,0 +1,16 @@
+[tool.uv.workspace]
+members = ["core", "providers/*"]
+
+# During local development, resolve the base package from the workspace instead
+# of PyPI. This is uv-only dev metadata and is NOT written into any published
+# wheel — the published providers depend on strands-agents-session from PyPI.
+[tool.uv.sources]
+strands-agents-session = { workspace = true }
+strands-session-dynamodb = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "strands-agents[openai]",
+]

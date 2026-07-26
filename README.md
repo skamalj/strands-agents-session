@@ -11,8 +11,11 @@ This is a **uv workspace monorepo**: one repository, multiple independently-publ
 | [`strands-agents-session`](https://pypi.org/project/strands-agents-session/) | [`core/`](core) | Backend-agnostic core — `SessionStorage` interface + `KeyValueSessionManager` (+ in-memory backend) |
 | [`strands-session-dynamodb`](https://pypi.org/project/strands-session-dynamodb/) | [`providers/dynamodb/`](providers/dynamodb) | Amazon DynamoDB storage backend |
 | [`strands-session-mongodb`](https://pypi.org/project/strands-session-mongodb/) | [`providers/mongodb/`](providers/mongodb) | MongoDB storage backend |
+| [`strands-session-sql`](https://pypi.org/project/strands-session-sql/) | [`providers/sql/`](providers/sql) | SQL via SQLAlchemy (SQLite, PostgreSQL, MySQL) |
 
-More providers (Redis, Postgres, …) land as new folders under `providers/`.
+More providers (Redis, …) land as new folders under `providers/`.
+
+📖 **Full documentation:** https://skamalj.github.io/strands-agents-session/
 
 ## Install
 
@@ -21,9 +24,11 @@ Pick a provider directly, or use the core package's extras:
 ```bash
 pip install "strands-agents-session[dynamodb]"   # core + DynamoDB provider
 pip install "strands-agents-session[mongodb]"     # core + MongoDB provider
+pip install "strands-agents-session[sql]"         # core + SQL provider (SQLAlchemy)
 # equivalently, install a provider directly:
 pip install strands-session-dynamodb
 pip install strands-session-mongodb
+pip install strands-session-sql
 ```
 
 Each provider is an independent distribution that pulls the core transitively — a DynamoDB user never pulls another provider's code.

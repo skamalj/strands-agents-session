@@ -8,6 +8,7 @@ members = ["core", "providers/*"]
 strands-agents-session = { workspace = true }
 strands-session-dynamodb = { workspace = true }
 strands-session-mongodb = { workspace = true }
+strands-session-sql = { workspace = true }
 
 [dependency-groups]
 dev = [
@@ -15,4 +16,5 @@ dev = [
     "pytest-cov",
     "strands-agents[openai]",
     "pymongo",
+    "sqlalchemy>=2.0",
 ]

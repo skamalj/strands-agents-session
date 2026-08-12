@@ -1,0 +1,32 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "strands-mongodb-session-manager"
+version = "0.2.0"
+description = "MongoDB session manager for Strands Agents — persists sessions, agent state, and messages"
+authors = [{name = "Kamal", email = "skamalj@github.com"}]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "strands-session-mongodb>=0.2.0",
+]
+keywords = [
+    "strands", "strands-agents", "session", "session-manager",
+    "mongodb", "agent-state", "memory", "persistence",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/skamalj/strands-agents-session"
+Repository = "https://github.com/skamalj/strands-agents-session.git"
+Documentation = "https://skamalj.github.io/agentstate-reducer/strands/providers/mongodb/"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/strands_mongodb_session_manager"]

@@ -1,5 +1,5 @@
 [tool.uv.workspace]
-members = ["core", "providers/*", "catalog/*"]
+members = ["core", "providers/*", "catalog/*", "storage/*"]
 
 # During local development, resolve the base package from the workspace instead
 # of PyPI. This is uv-only dev metadata and is NOT written into any published
@@ -12,6 +12,9 @@ strands-session-sql = { workspace = true }
 strands-dynamodb-session-manager = { workspace = true }
 strands-mongodb-session-manager = { workspace = true }
 strands-sql-session-manager = { workspace = true }
+strands-dynamodb-storage = { workspace = true }
+strands-mongodb-storage = { workspace = true }
+strands-sql-storage = { workspace = true }
 
 [dependency-groups]
 dev = [

@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "strands-mongodb-storage"
+version = "0.1.0"
+description = "MongoDB implementation of the Strands Agents Storage interface — durable bytes-under-keys for sessions, context offload, and memory"
+authors = [{name = "Kamal", email = "skamalj@gmail.com"}]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "strands-agents>=1.50",
+    "pymongo>=4.0",
+]
+keywords = [
+    "strands", "strands-agents", "storage", "mongodb",
+    "session", "context-offload", "memory",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/skamalj/strands-agents-session"
+Repository = "https://github.com/skamalj/strands-agents-session.git"
+
+[dependency-groups]
+dev = ["pytest>=7.0", "pytest-asyncio"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/strands_mongodb_storage"]

@@ -3,15 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "strands-dynamodb-store"
+name = "strands-storage-dynamodb"
 version = "0.1.0"
-description = "Amazon DynamoDB implementation of the Strands Agents Storage interface — durable bytes-under-keys for sessions, context offload, and memory (aka strands-storage-dynamodb)"
+description = "Amazon DynamoDB implementation of the Strands Agents Storage interface — durable bytes-under-keys for sessions, context offload, and memory (aka strands-dynamodb-store)"
 authors = [{name = "Kamal", email = "skamalj@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "strands-agents>=1.50",
-    "boto3",
+    "strands-dynamodb-store>=0.1.0",
 ]
 keywords = [
     "strands", "strands-agents", "storage", "dynamodb", "aws",
@@ -28,11 +27,5 @@ classifiers = [
 Homepage = "https://github.com/skamalj/strands-agents-session"
 Repository = "https://github.com/skamalj/strands-agents-session.git"
 
-[dependency-groups]
-dev = ["pytest>=7.0", "pytest-asyncio"]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-
 [tool.hatch.build.targets.wheel]
-packages = ["src/strands_dynamodb_storage"]
+packages = ["src/strands_storage_dynamodb"]

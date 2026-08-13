@@ -12,7 +12,8 @@ strands-session-sql = { workspace = true }
 strands-dynamodb-session-manager = { workspace = true }
 strands-mongodb-session-manager = { workspace = true }
 strands-sql-session-manager = { workspace = true }
-strands-dynamodb-storage = { workspace = true }
+strands-dynamodb-store = { workspace = true }
+strands-storage-dynamodb = { workspace = true }
 strands-mongodb-storage = { workspace = true }
 strands-sql-storage = { workspace = true }
 

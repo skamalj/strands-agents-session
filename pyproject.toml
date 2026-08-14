@@ -17,6 +17,8 @@ strands-storage-dynamodb = { workspace = true }
 strands-mongodb-storage = { workspace = true }
 strands-storage-mongodb = { workspace = true }
 strands-sql-storage = { workspace = true }
+strands-postgres-storage = { workspace = true }
+strands-storage-postgres = { workspace = true }
 
 [dependency-groups]
 dev = [

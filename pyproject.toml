@@ -1,6 +1,12 @@
 [tool.uv.workspace]
 members = ["core", "providers/*", "catalog/*", "storage/*"]
 
+# Root pytest config so running multiple package test dirs together (from the
+# workspace root) still collects async tests. Without this, the per-package
+# asyncio_mode is ignored for multi-dir runs and async tests silently don't run.
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
 # During local development, resolve the base package from the workspace instead
 # of PyPI. This is uv-only dev metadata and is NOT written into any published
 # wheel — the published providers depend on strands-agents-session from PyPI.

@@ -1,47 +1,8 @@
 """Contract tests for DynamoDBStorage against real DynamoDB.
 
-Uses AWS credentials from the environment / a profile (AWS_PROFILE). A single
-test table is reused; each test isolates itself with a unique key prefix and
-cleans up after itself.
+Shared ``storage`` / ``ns`` fixtures (with cleanup) live in conftest.py.
 """
-import os
-import uuid
-
-import boto3
-import pytest
 from strands.storage import Storage
-
-from strands_dynamodb_storage import DynamoDBStorage
-
-TABLE = os.environ.get("DDB_TEST_TABLE", "strands_storage_test")
-REGION = os.environ.get("AWS_REGION", "us-east-1")
-
-
-def _aws_available() -> bool:
-    try:
-        boto3.client("sts", region_name=REGION).get_caller_identity()
-        return True
-    except Exception:
-        return False
-
-
-pytestmark = pytest.mark.skipif(not _aws_available(), reason="AWS credentials not available")
-
-
-@pytest.fixture()
-def storage():
-    ns = f"test-{uuid.uuid4().hex[:8]}"
-    s = DynamoDBStorage(TABLE, region_name=REGION, prefix=ns)
-    yield s
-    # Sync cleanup: delete every item this test wrote under its namespace.
-    from boto3.dynamodb.conditions import Key
-
-    resp = s._table.query(
-        KeyConditionExpression=Key("PK").eq(s._pv) & Key("SK").begins_with(f"{ns}/")
-    )
-    with s._table.batch_writer() as batch:
-        for item in resp.get("Items", []):
-            batch.delete_item(Key={"PK": s._pv, "SK": item["SK"]})
 
 
 def test_satisfies_protocol(storage):

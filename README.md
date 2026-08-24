@@ -1,53 +1,73 @@
 # strands-agents-session
 
-A family of **session backends** for [Strands Agents](https://strandsagents.com) — persist an agent's sessions, agent state, and messages across runs. A backend-agnostic core plus pluggable storage providers.
+A family of **state, storage, and memory backends** for [Strands Agents](https://strandsagents.com) — persist sessions across runs, store durable bytes for any SDK construct, and give agents long-term semantic memory. A **uv workspace monorepo**: one repository, multiple independently-published PyPI packages.
 
-This is a **uv workspace monorepo**: one repository, multiple independently-published PyPI packages.
+The packages map onto three distinct Strands layers:
+
+| Strands layer | What it is | Our packages |
+|---|---|---|
+| **Session** (`SessionRepository`) | persist an agent's sessions / agent state / messages across runs | `strands-agents-session` + `strands-session-*` |
+| **Storage** (`strands.storage.Storage`) | durable bytes-under-keys (session snapshots, context offload, memory backing) | `strands-*-storage` / `strands-storage-*` |
+| **Memory** (`MemoryStore`) | long-term semantic memory (`search`/`add`) | `strands-dynamodb-store` |
 
 ## Packages
 
-| Package (PyPI) | Folder | What it is |
+### Session backends (`SessionRepository`)
+| Package (PyPI) | Folder | Backend |
 |---|---|---|
-| [`strands-agents-session`](https://pypi.org/project/strands-agents-session/) | [`core/`](core) | Backend-agnostic core — `SessionStorage` interface + `KeyValueSessionManager` (+ in-memory backend) |
-| [`strands-session-dynamodb`](https://pypi.org/project/strands-session-dynamodb/) | [`providers/dynamodb/`](providers/dynamodb) | Amazon DynamoDB storage backend |
-| [`strands-session-mongodb`](https://pypi.org/project/strands-session-mongodb/) | [`providers/mongodb/`](providers/mongodb) | MongoDB storage backend |
-| [`strands-session-sql`](https://pypi.org/project/strands-session-sql/) | [`providers/sql/`](providers/sql) | SQL via SQLAlchemy (SQLite, PostgreSQL, MySQL) |
+| [`strands-agents-session`](https://pypi.org/project/strands-agents-session/) | [`core/`](core) | backend-agnostic core (`SessionStorage` + `KeyValueSessionManager`) |
+| [`strands-session-dynamodb`](https://pypi.org/project/strands-session-dynamodb/) ·  [`…-session-manager`](https://pypi.org/project/strands-dynamodb-session-manager/) | [`providers/dynamodb`](providers/dynamodb) | Amazon DynamoDB |
+| [`strands-session-mongodb`](https://pypi.org/project/strands-session-mongodb/) ·  [`…-session-manager`](https://pypi.org/project/strands-mongodb-session-manager/) | [`providers/mongodb`](providers/mongodb) | MongoDB |
+| [`strands-session-sql`](https://pypi.org/project/strands-session-sql/) ·  [`…-session-manager`](https://pypi.org/project/strands-sql-session-manager/) | [`providers/sql`](providers/sql) | SQL (SQLAlchemy) |
 
-More providers (Redis, …) land as new folders under `providers/`.
+### Storage backends (`strands.storage.Storage`)
+| Package (PyPI) | Folder | Backend |
+|---|---|---|
+| [`strands-sql-storage`](https://pypi.org/project/strands-sql-storage/) | [`storage/sql`](storage/sql) | any SQLAlchemy DB |
+| [`strands-postgres-storage`](https://pypi.org/project/strands-postgres-storage/) · [`strands-storage-postgres`](https://pypi.org/project/strands-storage-postgres/) | [`storage/postgres`](storage/postgres) | PostgreSQL |
+| [`strands-mongodb-storage`](https://pypi.org/project/strands-mongodb-storage/) · [`strands-storage-mongodb`](https://pypi.org/project/strands-storage-mongodb/) | [`storage/mongodb`](storage/mongodb) | MongoDB |
+| [`strands-storage-dynamodb`](https://pypi.org/project/strands-storage-dynamodb/) | [`storage/dynamodb`](storage/dynamodb) | Amazon DynamoDB |
 
-📖 **Full documentation:** https://skamalj.github.io/strands-agents-session/
+### Memory store (`MemoryStore`)
+| Package (PyPI) | Folder | Backend |
+|---|---|---|
+| [`strands-dynamodb-store`](https://pypi.org/project/strands-dynamodb-store/) | [`memory/dynamodb`](memory/dynamodb) | DynamoDB **native vector search** (`SearchVectors`), Bedrock Titan embeddings |
+
+> **Naming note:** `strands-storage-dynamodb` is the byte **Storage** backend; `strands-dynamodb-store` is the semantic **MemoryStore**. `strands-dynamodb-store` 0.1.x was a storage alias — **from 0.2.0 it is a `MemoryStore`** (breaking); use `strands-storage-dynamodb` for byte storage.
+
+📖 **Full documentation:** https://skamalj.github.io/agentstate-reducer/strands/
 
 ## Install
 
-Pick a provider directly, or use the core package's extras:
-
 ```bash
-pip install "strands-agents-session[dynamodb]"   # core + DynamoDB provider
-pip install "strands-agents-session[mongodb]"     # core + MongoDB provider
-pip install "strands-agents-session[sql]"         # core + SQL provider (SQLAlchemy)
-# equivalently, install a provider directly:
-pip install strands-session-dynamodb
-pip install strands-session-mongodb
-pip install strands-session-sql
-```
+# Sessions
+pip install "strands-agents-session[dynamodb]"   # core + DynamoDB session provider
+pip install strands-session-mongodb              # or a provider directly
 
-Each provider is an independent distribution that pulls the core transitively — a DynamoDB user never pulls another provider's code.
+# Storage (bytes)
+pip install strands-storage-dynamodb
+pip install strands-postgres-storage
+
+# Memory (semantic, DynamoDB native vectors)
+pip install strands-dynamodb-store
+```
 
 ## Design
 
-- The **core** implements Strands' full `SessionRepository` (all 8 CRUD methods) over a tiny `SessionStorage` interface, and mixes in `RepositorySessionManager`, so the Strands session lifecycle (message indexing, restore, `removed_message_count` offsetting, tool-use repair) is reused unchanged.
-- A **provider** implements ~5 storage methods (`put`/`get`/`query`/`delete`/`delete_partition`). That's the entire surface to add a new backend.
-- **Storage only, by design.** Message *pruning* in Strands is a `ConversationManager` concern, deliberately decoupled from storage. These packages never prune — doing so at the storage layer would corrupt Strands' message-index/offset restore logic.
+- **Session** core implements Strands' full `SessionRepository` (8 CRUD methods) over a tiny `SessionStorage` interface + `RepositorySessionManager`; a provider implements ~5 storage methods. Storage-only by design — pruning is a `ConversationManager` concern.
+- **Storage** backends implement the four-method `strands.storage.Storage` (`write`/`read`/`delete`/`list`) — durable bytes for session snapshots, context offloading, and memory backing.
+- **Memory** (`strands-dynamodb-store`) is a real `MemoryStore` — it talks to DynamoDB's native vector search directly (like `BedrockKnowledgeBaseStore` talks to Bedrock), because `Storage` has no search primitive. You bring the embeddings (default: Bedrock Titan v2, pluggable).
 
 ## Development (uv workspace)
 
 ```bash
-uv sync                    # installs all workspace members + dev deps
-uv run pytest core/tests   # offline core tests (in-memory backend)
-uv run pytest providers/dynamodb/tests   # provider tests (needs AWS creds; LLM tests need OPENAI_API_KEY)
+uv sync
+uv run pytest core/tests                  # offline
+uv run pytest storage/postgres/tests      # needs local Postgres
+uv run pytest memory/dynamodb/tests       # needs AWS + Bedrock (DynamoDB vector search)
 ```
 
-The workspace resolves the core from local source during development (`[tool.uv.sources]`), while published providers depend on `strands-agents-session` from PyPI.
+Each package's tests run separately (per-package `asyncio_mode`). The workspace resolves siblings from local source during development; published packages depend on their PyPI releases.
 
 ## License
 

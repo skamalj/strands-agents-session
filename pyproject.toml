@@ -1,5 +1,5 @@
 [tool.uv.workspace]
-members = ["core", "providers/*", "catalog/*", "storage/*"]
+members = ["core", "providers/*", "catalog/*", "storage/*", "memory/*"]
 
 # Root pytest config so running multiple package test dirs together (from the
 # workspace root) still collects async tests. Without this, the per-package

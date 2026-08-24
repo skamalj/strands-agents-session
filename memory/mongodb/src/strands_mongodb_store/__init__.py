@@ -1,33 +1,31 @@
-"""MongoDB Atlas Vector Search ``MemoryStore`` for Strands Agents.
+"""MongoDB Vector Search ``MemoryStore`` (Automated Embedding) for Strands Agents.
 
 ``MongoDBMemoryStore`` is a Strands :class:`~strands.memory.types.MemoryStore`
-that stores memory entries — content plus an embedding vector — as MongoDB
-documents and answers :meth:`search` with **Atlas Vector Search** (the
-``$vectorSearch`` aggregation stage over an Atlas vector index).
+that stores memory entries as plain-text documents and answers :meth:`search`
+with MongoDB Vector Search using **Automated Embedding** — MongoDB generates the
+embeddings itself (via Voyage AI) at index- and query-time, so you never compute,
+store, or manage vectors, and there is no external embedder.
 
-Requires **MongoDB Atlas** (Vector Search is an Atlas feature; community/self-hosted
-MongoDB does not support ``$vectorSearch``). You bring the embeddings — by default
-Amazon Bedrock Titan Text v2; pass any ``embedder`` callable to change models.
+Works on **MongoDB Atlas** or **self-managed MongoDB Community 8.2+** running the
+``mongot`` binary. Automated Embedding requires a Voyage AI API key configured on
+the deployment (Atlas, or ``mongot`` for Community).
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Callable, List, Optional
+from typing import Any, Optional
 
 from pymongo import MongoClient
 from pymongo.operations import SearchIndexModel
 
 from strands.memory.types import MemoryEntry, MemoryStore, Metadata, SearchOptions
 
-__all__ = ["MongoDBMemoryStore", "bedrock_titan_embedder", "Embedder"]
+__all__ = ["MongoDBMemoryStore"]
 
-Embedder = Callable[[str], List[float]]
-DEFAULT_EMBED_MODEL = "amazon.titan-embed-text-v2:0"
-DEFAULT_DIMENSIONS = 1024
+DEFAULT_MODEL = "voyage-4-lite"
 DEFAULT_MAX_SEARCH_RESULTS = 10
 RELEVANCE_SCORE_KEY = "_score"
 
@@ -37,29 +35,11 @@ def _now() -> str:
     return f"{now.strftime('%Y-%m-%dT%H:%M:%S')}.{now.microsecond // 1000:03d}Z"
 
 
-def bedrock_titan_embedder(
-    *,
-    model_id: str = DEFAULT_EMBED_MODEL,
-    dimensions: int = DEFAULT_DIMENSIONS,
-    normalize: bool = True,
-    region_name: Optional[str] = None,
-    client: Any = None,
-) -> Embedder:
-    """An :data:`Embedder` backed by Amazon Bedrock Titan Text embeddings."""
-    import boto3
-
-    runtime = client or boto3.client("bedrock-runtime", region_name=region_name)
-
-    def embed(t: str) -> List[float]:
-        body = json.dumps({"inputText": t, "dimensions": dimensions, "normalize": normalize})
-        resp = runtime.invoke_model(modelId=model_id, body=body)
-        return json.loads(resp["body"].read())["embedding"]
-
-    return embed
-
-
 class MongoDBMemoryStore(MemoryStore):
-    """A Strands ``MemoryStore`` backed by MongoDB Atlas Vector Search.
+    """A Strands ``MemoryStore`` backed by MongoDB Vector Search Automated Embedding.
+
+    Documents store the raw ``content`` text; MongoDB auto-generates and manages
+    the embeddings. ``search`` passes the query text — MongoDB embeds it too.
 
     Example:
         ```python
@@ -67,7 +47,7 @@ class MongoDBMemoryStore(MemoryStore):
 
         store = MongoDBMemoryStore(
             name="user-memories",
-            connection_string="mongodb+srv://user:pass@cluster.mongodb.net",
+            connection_string="mongodb://localhost:27017",   # or Atlas SRV URI
             database_name="agent", collection_name="memory",
         )
         await store.add("The user prefers dark mode", metadata={"kind": "pref"})
@@ -87,12 +67,10 @@ class MongoDBMemoryStore(MemoryStore):
         max_search_results: Optional[int] = None,
         writable: bool = True,
         extraction: Any = None,
-        embedder: Optional[Embedder] = None,
-        dimensions: int = DEFAULT_DIMENSIONS,
-        similarity: str = "cosine",
+        model: str = DEFAULT_MODEL,
         index_name: str = "vector_index",
+        num_candidates: Optional[int] = None,
         create_index: bool = True,
-        region_name: Optional[str] = None,
     ) -> None:
         if not name or not name.strip():
             raise ValueError("MongoDBMemoryStore: name must not be empty.")
@@ -102,22 +80,19 @@ class MongoDBMemoryStore(MemoryStore):
         self.writable = writable
         self.extraction = extraction
 
-        self._embedder = embedder or bedrock_titan_embedder(
-            dimensions=dimensions, region_name=region_name
-        )
-        self._dimensions = dimensions
-        self._similarity = similarity
+        self._model = model
         self._index = index_name
+        self._num_candidates = num_candidates
         self._client = client or MongoClient(connection_string)
         self._collection = self._client[database_name][collection_name]
         if create_index:
             self._ensure_index()
 
     def _ensure_index(self) -> None:
-        """Create the Atlas vector search index if absent (best effort).
+        """Create the Automated-Embedding vector search index if absent.
 
-        Atlas-only: on community MongoDB this raises, which is expected — the store
-        requires Atlas Vector Search.
+        Requires MongoDB Vector Search (Atlas, or self-managed Community 8.2+ with
+        ``mongot``) plus a Voyage AI key configured on the deployment.
         """
         existing = {ix["name"] for ix in self._collection.list_search_indexes()}
         if self._index in existing:
@@ -126,10 +101,10 @@ class MongoDBMemoryStore(MemoryStore):
             definition={
                 "fields": [
                     {
-                        "type": "vector",
-                        "path": "embedding",
-                        "numDimensions": self._dimensions,
-                        "similarity": self._similarity,
+                        "type": "autoEmbed",
+                        "modality": "text",
+                        "path": "content",
+                        "model": self._model,
                     }
                 ]
             },
@@ -139,7 +114,7 @@ class MongoDBMemoryStore(MemoryStore):
         self._collection.create_search_index(model)
 
     async def search(self, query: str, options: SearchOptions | None = None) -> list[MemoryEntry]:
-        """Semantic search via Atlas ``$vectorSearch``, ranked by similarity score."""
+        """Semantic search via MongoDB Vector Search — the query text is auto-embedded."""
         caller_max = options.get("max_search_results") if options else None
         if caller_max is not None and caller_max < 1:
             raise ValueError("MongoDBMemoryStore: max_search_results must be at least 1.")
@@ -148,17 +123,15 @@ class MongoDBMemoryStore(MemoryStore):
             return []
 
         def _run() -> list[MemoryEntry]:
-            vector = self._embedder(query)
+            vector_search: dict[str, Any] = {
+                "index": self._index,
+                "path": "content",
+                "query": query,
+                "limit": limit,
+                "numCandidates": self._num_candidates or max(limit * 10, 100),
+            }
             pipeline = [
-                {
-                    "$vectorSearch": {
-                        "index": self._index,
-                        "path": "embedding",
-                        "queryVector": vector,
-                        "numCandidates": max(limit * 10, 100),
-                        "limit": limit,
-                    }
-                },
+                {"$vectorSearch": vector_search},
                 {
                     "$project": {
                         "_id": 0,
@@ -178,23 +151,16 @@ class MongoDBMemoryStore(MemoryStore):
         return await asyncio.to_thread(_run)
 
     async def add(self, content: str, metadata: Metadata | None = None) -> dict:
-        """Embed ``content`` and store it as a document; returns ``{"id": ...}``."""
+        """Store ``content`` as a plain-text document (MongoDB embeds it); returns ``{"id": ...}``."""
         if not self.writable:
             raise ValueError("MongoDBMemoryStore: store is not writable (set writable=True).")
         if not content or not content.strip():
             raise ValueError("MongoDBMemoryStore: content must not be empty.")
 
         def _run() -> dict:
-            vector = self._embedder(content)
             record_id = str(uuid.uuid4())
             self._collection.insert_one(
-                {
-                    "_id": record_id,
-                    "content": content,
-                    "embedding": vector,
-                    "metadata": metadata,
-                    "createdAt": _now(),
-                }
+                {"_id": record_id, "content": content, "metadata": metadata, "createdAt": _now()}
             )
             return {"id": record_id}
 

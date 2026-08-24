@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "strands-store-mongodb"
-version = "0.1.0"
-description = "MongoDB Atlas Vector Search MemoryStore for Strands Agents — semantic long-term memory (aka strands-mongodb-store)"
+version = "0.2.0"
+description = "MongoDB Vector Search MemoryStore for Strands Agents — semantic memory with Automated Embedding (aka strands-mongodb-store)"
 authors = [{name = "Kamal", email = "skamalj@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.10"

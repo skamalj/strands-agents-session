@@ -1,6 +1,6 @@
 # strands-mongodb-store
 
-A **MongoDB Atlas Vector Search** `MemoryStore` for [Strands Agents](https://strandsagents.com) — semantic long-term agent memory via Atlas `$vectorSearch`. No external vector database.
+A **MongoDB Vector Search** `MemoryStore` for [Strands Agents](https://strandsagents.com) — semantic long-term agent memory using **Automated Embedding**: MongoDB generates the embeddings itself (via Voyage AI), so you store **plain text** and query with **plain text** — no external embedder, no vectors to manage.
 
 ```bash
 pip install strands-mongodb-store
@@ -13,8 +13,9 @@ from strands_mongodb_store import MongoDBMemoryStore
 
 store = MongoDBMemoryStore(
     name="user-memories",
-    connection_string="mongodb+srv://user:pass@cluster.mongodb.net",
+    connection_string="mongodb://localhost:27017",   # self-managed, or an Atlas SRV URI
     database_name="agent", collection_name="memory",
+    model="voyage-4-lite",
 )
 agent = Agent(memory_manager=MemoryManager(stores=[store]))
 
@@ -24,15 +25,19 @@ hits = await store.search("what theme does the user like?")
 
 ## How it works
 
-- **Semantic recall** via Atlas `$vectorSearch` (approximate nearest-neighbor over a vector index), ranked by `vectorSearchScore`.
-- **You bring the embeddings.** Default embedder is **Amazon Bedrock Titan Text v2** (1024-dim, cosine); pass any `embedder` callable.
-- Each `add` stores a document `{_id, content, embedding, metadata, createdAt}`; the Atlas vector index is created automatically if absent (`create_index=True`).
+- **Automated Embedding.** The vector index is created with a `type: "autoEmbed"` field and a Voyage model; MongoDB embeds your `content` at index-time and your query text at query-time. `add` stores just `{_id, content, metadata, createdAt}` — no vectors in your documents.
+- **Semantic recall** via `$vectorSearch` (`"query": <text>`), ranked by `vectorSearchScore`, surfaced as `_score`.
+- The vector index is created automatically if absent.
 
 ## Requirements
 
-**MongoDB Atlas** — Vector Search (`$vectorSearch`) is an Atlas feature; community/self-hosted MongoDB does not support it. For local development, use a managed store or the [Postgres](https://pypi.org/project/strands-postgres-store/) / [DynamoDB](https://pypi.org/project/strands-dynamodb-store/) memory stores.
+MongoDB **Vector Search** with **Automated Embedding**, on either:
+- **MongoDB Atlas**, or
+- **self-managed MongoDB Community 8.2+** running the **`mongot`** binary (Linux; Docker / tarball / package / K8s).
 
-> The memory **store** (`strands-mongodb-store`) is distinct from the byte **storage** backend ([`strands-mongodb-storage`](https://pypi.org/project/strands-mongodb-storage/)). Also published as `strands-store-mongodb`.
+Automated Embedding needs a **Voyage AI API key** configured on the deployment (Atlas, or `mongot` for Community). Models: `voyage-4-lite` (default), `voyage-4`, `voyage-4-large`, `voyage-code-3`.
+
+> The memory **store** (`strands-mongodb-store`) is distinct from the byte **storage** backend ([`strands-mongodb-storage`](https://pypi.org/project/strands-mongodb-storage/)). Also published as `strands-store-mongodb`. **0.2.0** switched from manual embeddings to Automated Embedding (breaking).
 
 ## License
 

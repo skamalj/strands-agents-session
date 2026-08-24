@@ -30,10 +30,14 @@ The packages map onto three distinct Strands layers:
 | [`strands-mongodb-storage`](https://pypi.org/project/strands-mongodb-storage/) · [`strands-storage-mongodb`](https://pypi.org/project/strands-storage-mongodb/) | [`storage/mongodb`](storage/mongodb) | MongoDB |
 | [`strands-storage-dynamodb`](https://pypi.org/project/strands-storage-dynamodb/) | [`storage/dynamodb`](storage/dynamodb) | Amazon DynamoDB |
 
-### Memory store (`MemoryStore`)
-| Package (PyPI) | Folder | Backend |
+### Memory stores (`MemoryStore`) — semantic long-term memory
+| Package (PyPI) | Folder | Vector engine |
 |---|---|---|
-| [`strands-dynamodb-store`](https://pypi.org/project/strands-dynamodb-store/) | [`memory/dynamodb`](memory/dynamodb) | DynamoDB **native vector search** (`SearchVectors`), Bedrock Titan embeddings |
+| [`strands-dynamodb-store`](https://pypi.org/project/strands-dynamodb-store/) | [`memory/dynamodb`](memory/dynamodb) | DynamoDB **native `SearchVectors`** |
+| [`strands-postgres-store`](https://pypi.org/project/strands-postgres-store/) · [`strands-store-postgres`](https://pypi.org/project/strands-store-postgres/) | [`memory/postgres`](memory/postgres) | PostgreSQL **pgvector** (`<=>` / HNSW) |
+| [`strands-mongodb-store`](https://pypi.org/project/strands-mongodb-store/) · [`strands-store-mongodb`](https://pypi.org/project/strands-store-mongodb/) | [`memory/mongodb`](memory/mongodb) | MongoDB **Atlas `$vectorSearch`** |
+
+Each is a real Strands `MemoryStore` (`search`/`add`) that talks to its backend's native vector search directly — `Storage` has no search primitive, so a semantic store can't ride on it. You bring the embeddings (default: Bedrock Titan v2, pluggable).
 
 > **Naming note:** `strands-storage-dynamodb` is the byte **Storage** backend; `strands-dynamodb-store` is the semantic **MemoryStore**. `strands-dynamodb-store` 0.1.x was a storage alias — **from 0.2.0 it is a `MemoryStore`** (breaking); use `strands-storage-dynamodb` for byte storage.
 
@@ -50,15 +54,17 @@ pip install strands-session-mongodb              # or a provider directly
 pip install strands-storage-dynamodb
 pip install strands-postgres-storage
 
-# Memory (semantic, DynamoDB native vectors)
-pip install strands-dynamodb-store
+# Memory (semantic vector search)
+pip install strands-dynamodb-store     # DynamoDB native SearchVectors
+pip install strands-postgres-store     # PostgreSQL pgvector
+pip install strands-mongodb-store      # MongoDB Atlas $vectorSearch
 ```
 
 ## Design
 
 - **Session** core implements Strands' full `SessionRepository` (8 CRUD methods) over a tiny `SessionStorage` interface + `RepositorySessionManager`; a provider implements ~5 storage methods. Storage-only by design — pruning is a `ConversationManager` concern.
 - **Storage** backends implement the four-method `strands.storage.Storage` (`write`/`read`/`delete`/`list`) — durable bytes for session snapshots, context offloading, and memory backing.
-- **Memory** (`strands-dynamodb-store`) is a real `MemoryStore` — it talks to DynamoDB's native vector search directly (like `BedrockKnowledgeBaseStore` talks to Bedrock), because `Storage` has no search primitive. You bring the embeddings (default: Bedrock Titan v2, pluggable).
+- **Memory** stores are real `MemoryStore`s — each talks to its backend's native vector search directly (DynamoDB `SearchVectors`, Postgres `pgvector`, MongoDB Atlas `$vectorSearch`), like `BedrockKnowledgeBaseStore` talks to Bedrock, because `Storage` has no search primitive. You bring the embeddings (default: Bedrock Titan v2, pluggable).
 
 ## Development (uv workspace)
 

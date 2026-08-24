@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "strands-postgres-store"
+version = "0.1.0"
+description = "PostgreSQL + pgvector MemoryStore for Strands Agents — semantic long-term memory via native vector search, no external vector DB"
+authors = [{name = "Kamal", email = "skamalj@gmail.com"}]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "strands-agents>=1.50",
+    "sqlalchemy>=2.0",
+    "psycopg2-binary",
+    "pgvector>=0.3",
+]
+keywords = [
+    "strands", "strands-agents", "memory", "memory-store", "postgres", "postgresql",
+    "pgvector", "vector-search", "embeddings", "semantic-search", "agent-memory",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/skamalj/strands-agents-session"
+Repository = "https://github.com/skamalj/strands-agents-session.git"
+
+[dependency-groups]
+dev = ["pytest>=7.0", "pytest-asyncio"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/strands_postgres_store"]

@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "strands-mongodb-store"
+version = "0.1.0"
+description = "MongoDB Atlas Vector Search MemoryStore for Strands Agents — semantic long-term memory via $vectorSearch, no external vector DB"
+authors = [{name = "Kamal", email = "skamalj@gmail.com"}]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "strands-agents>=1.50",
+    "pymongo>=4.7",
+]
+keywords = [
+    "strands", "strands-agents", "memory", "memory-store", "mongodb", "atlas",
+    "vector-search", "embeddings", "semantic-search", "agent-memory",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Homepage = "https://github.com/skamalj/strands-agents-session"
+Repository = "https://github.com/skamalj/strands-agents-session.git"
+
+[dependency-groups]
+dev = ["pytest>=7.0", "pytest-asyncio"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/strands_mongodb_store"]

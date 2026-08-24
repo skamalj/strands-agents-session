@@ -2,6 +2,8 @@
 
 A family of **state, storage, and memory backends** for [Strands Agents](https://strandsagents.com) — persist sessions across runs, store durable bytes for any SDK construct, and give agents long-term semantic memory. A **uv workspace monorepo**: one repository, multiple independently-published PyPI packages.
 
+📖 **Full documentation:** **<https://skamalj.github.io/agentstate-reducer/strands/>**
+
 The packages map onto three distinct Strands layers:
 
 | Strands layer | What it is | Our packages |

@@ -94,6 +94,10 @@ class MongoDBMemoryStore(MemoryStore):
         Requires MongoDB Vector Search (Atlas, or self-managed Community 8.2+ with
         ``mongot``) plus a Voyage AI key configured on the deployment.
         """
+        # A search index can only be created on an existing collection.
+        db = self._collection.database
+        if self._collection.name not in db.list_collection_names():
+            db.create_collection(self._collection.name)
         existing = {ix["name"] for ix in self._collection.list_search_indexes()}
         if self._index in existing:
             return

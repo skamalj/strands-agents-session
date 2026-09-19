@@ -37,8 +37,10 @@ DEFAULT_DIMENSIONS = 1024
 DEFAULT_DISTANCE_FUNCTION = "COSINE"
 DEFAULT_MAX_SEARCH_RESULTS = 10
 
-# Synthetic metadata key carrying the vector-search similarity score on a result.
+# Synthetic metadata keys on a search result: ``_score`` is a similarity (higher is
+# better; for COSINE it is ``1 - distance``), ``_distance`` is DynamoDB's raw value.
 RELEVANCE_SCORE_KEY = "_score"
+DISTANCE_KEY = "_distance"
 
 
 def _now() -> str:
@@ -186,7 +188,14 @@ class DynamoDBMemoryStore(MemoryStore):
                 metadata: Metadata = {}
                 if "metadata" in item:
                     metadata = json.loads(item["metadata"]["S"])
-                metadata[RELEVANCE_SCORE_KEY] = result.get("Score")
+                # DynamoDB returns a *distance* (0 = identical). Surface a similarity
+                # (higher is better) as ``_score`` and keep the raw value as ``_distance``.
+                raw = result.get("Score")
+                if raw is not None:
+                    metadata[DISTANCE_KEY] = float(raw)
+                    metadata[RELEVANCE_SCORE_KEY] = (
+                        1.0 - float(raw) if self._distance == "COSINE" else -float(raw)
+                    )
                 entries.append(MemoryEntry(content=content, metadata=metadata))
             return entries
 

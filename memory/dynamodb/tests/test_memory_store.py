@@ -73,6 +73,12 @@ async def test_semantic_search_ranks_relevant_first(seeded):
     assert hits, "expected at least one hit"
     assert "sushi" in hits[0].content.lower()           # semantically closest wins
     assert hits[0].metadata.get("_score") is not None    # score surfaced
+    # _score is a similarity (higher = better): the best hit must score highest, and
+    # the raw DynamoDB distance is kept separately as _distance (lower = better).
+    scores = [h.metadata["_score"] for h in hits]
+    assert scores == sorted(scores, reverse=True)
+    assert hits[0].metadata["_distance"] <= hits[-1].metadata["_distance"]
+    assert hits[0].metadata["_score"] == 1.0 - hits[0].metadata["_distance"]
     assert hits[0].metadata.get("kind") == "food"        # stored metadata round-trips
 
 

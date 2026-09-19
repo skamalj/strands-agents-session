@@ -32,6 +32,8 @@ hits = await store.search("what theme does the user like?")
 
 Implements the Strands `MemoryStore` protocol: `search(query, options)` and `add(content, metadata)`.
 
+Each result's metadata carries `_score`, a **similarity** (higher is better; for `COSINE` it is `1 - distance`), and `_distance`, DynamoDB's raw value (lower is better). *0.2.0 reported the raw distance as `_score`; fixed in 0.2.1.*
+
 ## Requirements
 
 - `boto3>=1.43.78` (DynamoDB vector search, GA 2026-08-05)

@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "strands-storage-mongodb"
-version = "0.1.0"
+version = "0.1.1"
 description = "MongoDB implementation of the Strands Agents Storage interface — durable bytes-under-keys for sessions, context offload, and memory (aka strands-mongodb-storage)"
 authors = [{name = "Kamal", email = "skamalj@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "strands-mongodb-storage>=0.1.0",
+    "strands-mongodb-storage>=0.1.1",
 ]
 keywords = [
     "strands", "strands-agents", "storage", "mongodb",

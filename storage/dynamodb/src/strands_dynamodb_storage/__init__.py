@@ -18,6 +18,7 @@ from typing import Any, Optional
 import boto3
 from boto3.dynamodb.conditions import Key
 
+from strands.storage import Storage
 from strands.types.exceptions import StorageError
 
 __all__ = ["DynamoDBStorage"]
@@ -44,7 +45,7 @@ def _to_bytes(value: Any) -> bytes:
     return value.value if hasattr(value, "value") else bytes(value)
 
 
-class DynamoDBStorage:
+class DynamoDBStorage(Storage):
     """Persists bytes under string keys in an Amazon DynamoDB table.
 
     All values share one partition (``partition_value``) with the storage key as

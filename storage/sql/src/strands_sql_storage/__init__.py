@@ -27,6 +27,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.engine import Engine
 
+from strands.storage import Storage
 from strands.types.exceptions import StorageError
 
 __all__ = ["SQLStorage"]
@@ -53,7 +54,7 @@ def _escape_like(value: str) -> str:
     return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
-class SQLStorage:
+class SQLStorage(Storage):
     """Persists bytes under string keys in a SQLAlchemy-backed table.
 
     Example:

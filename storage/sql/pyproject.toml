@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "strands-sql-storage"
-version = "0.1.0"
+version = "0.1.1"
 description = "SQL (SQLAlchemy) implementation of the Strands Agents Storage interface — durable bytes-under-keys for sessions, context offload, and memory"
 authors = [{name = "Kamal", email = "skamalj@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "strands-agents>=1.50",
+    "strands-agents>=1.54",
     "sqlalchemy>=2.0",
 ]
 keywords = [

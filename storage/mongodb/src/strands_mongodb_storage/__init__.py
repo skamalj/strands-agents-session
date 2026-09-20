@@ -15,6 +15,7 @@ from typing import Optional
 from bson.binary import Binary
 from pymongo import MongoClient
 
+from strands.storage import Storage
 from strands.types.exceptions import StorageError
 
 __all__ = ["MongoDBStorage"]
@@ -36,7 +37,7 @@ def _normalize_prefix(prefix: str) -> str:
     return normalized
 
 
-class MongoDBStorage:
+class MongoDBStorage(Storage):
     """Persists bytes under string keys in a MongoDB collection.
 
     Example:

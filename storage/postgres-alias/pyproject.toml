@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "strands-storage-postgres"
-version = "0.1.0"
+version = "0.1.1"
 description = "PostgreSQL implementation of the Strands Agents Storage interface — durable bytes-under-keys for sessions, context offload, and memory (aka strands-postgres-storage)"
 authors = [{name = "Kamal", email = "skamalj@gmail.com"}]
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "strands-postgres-storage>=0.1.0",
+    "strands-postgres-storage>=0.1.1",
 ]
 keywords = [
     "strands", "strands-agents", "storage", "postgres", "postgresql",
